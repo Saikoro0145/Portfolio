@@ -1,0 +1,213 @@
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>書籍管理システム</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px 16px 40px;
+      text-align: center;
+      font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+      font-size: 16px;
+      color: #222;
+      background: #f6f6f8;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 28px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .section {
+      margin: 16px auto 24px;
+      padding: 16px 20px;
+      text-align: left;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .search-help {
+      display: block;
+      margin-bottom: 10px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    label {
+      width: 6em;
+      text-align: right;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      flex: 1;
+      min-width: 200px;
+      max-width: 420px;
+      padding: 6px 8px;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 6px 12px;
+      border: 1px solid #888;
+      border-radius: 4px;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #e6e6e6;
+    }
+
+    .actions {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        font-size: 15px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      label {
+        width: auto;
+        text-align: left;
+      }
+
+      .field {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>書籍管理システム</h1>
+    <div class="section">
+      <h2>書籍検索</h2>
+      <form name="form1" action="/cgi-bin/searchresult.py" method="POST">
+        <div class="field">
+          <label for="query"></label>
+          <input type="text" id="query" name="param1" />
+          <button type="submit" name="submit">検索</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section">
+      <h2>書籍追加</h2>
+      <form name="addform" action="/cgi-bin/addbook.py" method="POST">
+        <div class="field">
+          <label for="isbn">ISBN</label>
+          <input type="text" id="isbn" name="isbn" inputmode="numeric" pattern="[0-9]{13}" minlength="13" maxlength="13"
+            placeholder="13桁の数字" required />
+          <button type="button" onclick="lookupIsbn()">ISBNから書籍情報を取得</button>
+        </div>
+        <div class="field">
+          <label for="title">タイトル</label>
+          <input type="text" id="title" name="title" required />
+        </div>
+        <div class="field">
+          <label for="author">著者</label>
+          <input type="text" id="author" name="author" required />
+        </div>
+        <div class="field">
+          <label for="publisher">出版社</label>
+          <input type="text" id="publisher" name="publisher" required />
+        </div>
+        <div class="actions">
+          <button type="submit">追加</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    document.forms["addform"].forms["addform"].addEventListener("submit", function (event) {
+      if (addForm && !addForm.checkValidity()) {
+        addForm.reportValidity();
+        event.preventDefault();
+      }
+    });
+
+    function lookupIsbn() {
+      var isbn = document.getElementById("isbn").value.trim();
+      if (!isbn) {
+        alert("ISBNを入力して下さい");
+        return;
+      }
+      if (!/^[0-9]{13}$/.test(isbn)) {
+        alert("ISBNは13桁の数字で入力して下さい");
+        return;
+      }
+      fetch("/cgi-bin/isbnlookup.py?isbn=" + encodeURIComponent(isbn))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (!data) {
+            alert("書籍情報を取得できませんでした");
+            return;
+          }
+          if (data.message) {
+            alert(data.message);
+            return;
+          }
+          if (data.title) {
+            document.getElementById("title").value = data.title;
+          }
+          if (data.author) {
+            document.getElementById("author").value = data.author;
+          }
+          if (data.publisher) {
+            document.getElementById("publisher").value = data.publisher;
+          }
+          if (!data.title && !data.author && !data.publisher) {
+            alert("書籍のタイトル，著者，出版社を取得できませんでした");
+          }
+        })
+        .catch(function () {
+          alert("書籍情報の取得に失敗しました");
+        });
+    }
+  </script>
+</body>
+
+</html>
