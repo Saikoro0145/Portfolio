@@ -6,6 +6,6 @@
 
 - Python 3
 - CGI
-- HTML / CSS / JavaScript
+- HTML
 - SQLite
 - Google Books API
